@@ -1,2 +1,30 @@
-# ratelimit-jwt-quarkus
-Ratelimit Jwt Quarkus
+# Usando JWT RBAC, RateLimit com Quarkus
+
+Este projeto é um tutorial de como usar `Jwt Rbac com Ratelimit no Redis usando Quarkus`, mostra como validar e gerar Tokens e fornecer acesso seguro aos endpoints HTTP usando autorização de roles e token e controle de acesso baseado em funções no Quarkus.
+
+## Usando cURL para testar API
+curl --location --request POST 'localhost:8080/api/signIn' \
+--header 'Content-Type: application/json' \
+--header 'Cookie: auth-token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJKV1QgQnVpbGRlciBRdWFya3VzIiwic3ViIjoiaWRfM2Y5NjQxMDQtYzkwMS00MWNmLTk5Y2ItMTA2ODNmMWEyZjkxIiwiYXVkIjoiand0LXRva2VuIiwiZ3JvdXBzIjpbIlVTRVIiXSwiYWNjZXNzX3Rva2VuIjoiZmQ1NDdmYzctYTNhNy00Y2Y4LWEwOTctYTI3OGNmZTQ0MjFlIiwiaWF0IjoxNjUwNzM0ODU0LCJleHAiOjE2NTA3MzQ5MTQsImp0aSI6IjNhNGYwOTM0LTY5YjgtNDMwYi1hMWZkLTM2NzhkNTJkZDFkZiJ9.v0mXMu_vio_AKzuJ4DMWt2hvsm3P5c60jq9enXjfy-dId847Keu-PsIFKYfd-ndlw46uWTq4rTj6j-1bKeYRlqXELn04YjHg9L2S_GTus9Zt8_J1zJWd9rgO9AW5I2w9f4xIpECCe7KkcNf4DxieNldkh4RFyjw3NeSc5canyxswrj3vg1tCPmXWeTT2KwhNmYbSbrZF1Vws4YYmFy0EFMvA0CXH_TaFR7B186ZTmCysg_h5V87PZnt0iKlH95T7K3R_9ERzwIbICbtMAtDJIW2mZ2597mSTYpDeD0-E9fjat3rZ04OEt6Xm2QRJ9CJ2CoD5ay2NPdjwHclrenKJjA' \
+--data-raw '{
+  "username": "asampaio",
+  "password": "12345"
+}'
+
+curl --location --request POST 'http://localhost:8080/api/secured/addUser' \
+--header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2p1Z2lzdGFuYnVsLm9yZy9pc3N1ZXIiLCJ1cG4iOiJoYWtkb2dhbiIsInVzZXJJZCI6NTEsImdyb3VwcyI6WyJhZG1pbiJdLCJpYXQiOjE2NTA2MzU3NTEsImV4cCI6MTY1MDYzNTgxMSwianRpIjoiZGQ4NjJhYmEtYjg2NC00NjAzLTgwYTktMTk0MzcyZDkyYzZkIn0.vHGW8oxOSme2l2maWO46-KyzKtNFpvS80iuXiByucl2JOCDkBhZ-dbOegkcxekL2uUAqdH0CdILbEJ5Yk4eLPL0bD3OOXcDAcZB4vhVCjwl-EqflTqW2L9JzV92Ig9uIX5GWOTd8FfhKQBuwVbZTMz5ya4P3owWx55B6d9svCw1UnXxmmt8wvDFbdA8qU-zch_fbhi9Bp_SJLBzYFESy2YnTRWocdM2eXfbi51bwi1PEa3QrkG4wkVQX6oAXwtaOL589Jt8r_XkRqw9_v_n1ZJN1jASz4c-ztysYEqa-5Wu6KQ2C1_u0FCLpyP_gRKo8s7mpoPej1xlQT_J58JwbPw' \
+--header 'Content-Type: application/json' \
+--header 'Cookie: auth-token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJKV1QgQnVpbGRlciBRdWFya3VzIiwic3ViIjoiaWRfM2Y5NjQxMDQtYzkwMS00MWNmLTk5Y2ItMTA2ODNmMWEyZjkxIiwiYXVkIjoiand0LXRva2VuIiwiZ3JvdXBzIjpbIlVTRVIiXSwiYWNjZXNzX3Rva2VuIjoiZmQ1NDdmYzctYTNhNy00Y2Y4LWEwOTctYTI3OGNmZTQ0MjFlIiwiaWF0IjoxNjUwNzM0ODU0LCJleHAiOjE2NTA3MzQ5MTQsImp0aSI6IjNhNGYwOTM0LTY5YjgtNDMwYi1hMWZkLTM2NzhkNTJkZDFkZiJ9.v0mXMu_vio_AKzuJ4DMWt2hvsm3P5c60jq9enXjfy-dId847Keu-PsIFKYfd-ndlw46uWTq4rTj6j-1bKeYRlqXELn04YjHg9L2S_GTus9Zt8_J1zJWd9rgO9AW5I2w9f4xIpECCe7KkcNf4DxieNldkh4RFyjw3NeSc5canyxswrj3vg1tCPmXWeTT2KwhNmYbSbrZF1Vws4YYmFy0EFMvA0CXH_TaFR7B186ZTmCysg_h5V87PZnt0iKlH95T7K3R_9ERzwIbICbtMAtDJIW2mZ2597mSTYpDeD0-E9fjat3rZ04OEt6Xm2QRJ9CJ2CoD5ay2NPdjwHclrenKJjA' \
+--data-raw '{
+  "username": "admin@techtalsteeeve.err",
+  "password": "pass",
+  "role": "user"
+}'
+
+## Requisitos
+- JDK 11 or later
+- Docker (for Postgresql and Redis)  
+
+
+## Executar o script rsaKeyPair.sh antes de executar o aplicação
+mvn quarkus:dev
